@@ -1,25 +1,9 @@
 from flask_cache import Cache
 from flask_sqlalchemy import SQLAlchemy
 from injector import Module, singleton
-from sqlalchemy import Column
-from sqlalchemy import String
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
-
-
-class KeyValue(Base):
-    __tablename__ = 'data'
-
-    key = Column(String, primary_key=True)
-    value = Column(String)
-
-    def __init__(self, key, value):
-        self.key = key
-        self.value = value
-
-    def serializable(self):
-        return
 
 
 class AppModule(Module):

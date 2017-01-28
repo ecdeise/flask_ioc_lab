@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from injector import inject
 from sqlalchemy.orm.exc import NoResultFound
 
-from app.modules import KeyValue
+from app.models import KeyValue, User
 
 
 def configure_views(app, cached):
@@ -49,4 +49,26 @@ def configure_views(app, cached):
     @inject(request=Request)
     def index(request, name):
         response = 'index page ' + name
+        return response
+
+    @app.route('/user/<username>')
+    @inject(db=SQLAlchemy)
+    def getuser(db, username):
+        try:
+            user = db.session.query(User).filter(User.username == username).one()
+        except NoResultFound:
+            response = jsonify(status='No such user', context=username)
+            response.status = '404 Not Found'
+            return response
+        return user.__repr__()
+
+
+    @app.route('/user', methods=['POST'])
+    @inject(request=Request, db=SQLAlchemy)
+    def addUser(request, db):
+        user = User(username=request.form['username'], email=request.form['email'], password=request.form['password'])
+        db.session.add(user)
+        db.session.commit()
+        response = jsonify(status='OK')
+        response.status = '201 CREATED'
         return response
