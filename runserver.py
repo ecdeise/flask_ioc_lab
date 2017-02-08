@@ -7,7 +7,8 @@ from flask_injector import FlaskInjector
 from injector import Injector
 from sqlalchemy.ext.declarative import declarative_base
 
-from app import modules, views
+import modules
+import views
 
 il = logging.getLogger('injector')
 il.addHandler(logging.StreamHandler())
@@ -33,7 +34,6 @@ def main():
     views.configure_views(app=app, cached=injector.get(Cache).cached)
     FlaskInjector(app=app, injector=injector)
     app.run()
-
     #client = app.test_client()
 
     # response = client.get('/')

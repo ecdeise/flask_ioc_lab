@@ -1,8 +1,7 @@
 from sqlalchemy import Column, String
 from sqlalchemy import Integer
-from sqlalchemy.orm import relationship
 
-from app.modules import Base
+from modules import Base
 
 
 class KeyValue(Base):
