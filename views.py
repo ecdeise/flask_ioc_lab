@@ -7,13 +7,15 @@ from flask import render_template
 from flask import session
 from flask import url_for
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf import Form
 from injector import inject
 from sqlalchemy.orm.exc import NoResultFound
-from flask_wtf import Form
-from werkzeug.utils import redirect
+from views import *
 from wtforms.ext.appengine.db import model_form
 
-from models import KeyValue, User
+from flask import flash, request
+
+from models import User, UserForm
 
 
 def configure_views(app, cached):
@@ -32,14 +34,8 @@ def configure_views(app, cached):
     @app.route('/')
     @login_required
     def home():  # (request, db):
+        return render_template('index.html', auth=session.get('authenticated'))
 
-        print('index')
-        return render_template('index.html')
-        # if not session.get('logged_in'):
-        #     session['logged_in'] = False
-        #     return render_template('login.html')
-        # else:
-        #     return "hello admin"
 
     # def list(db):
     #     data = [i.key for i in db.session.query(KeyValue).order_by(KeyValue.key)]
@@ -49,23 +45,31 @@ def configure_views(app, cached):
     @inject(request=Request, db=SQLAlchemy)
     def do_admin_login(request, db):
         user = db.session.query(User).filter(User.username == request.form['username'] and User.password == request.form['password']).first()
-
-        print(user)
         if user is None:
             flash('no user found')
         else:
-            session['logged_in'] = user.is_authenticated
+            session['authenticated'] = user.is_authenticated
         return home()
 
-        # if user is not None:
-        #     if user.password == request.form['password']:
-        #         session['logged_in'] = True
-        #
-        # if request.form['password'] == 'password' and request.form['username'] == 'admin':
-        #     session['logged_in'] = True
-        # else:
-        #     flash('wrong password')
-        # return home()
+    @app.route('/sitemap')
+    def list_routes():
+        import urllib
+        endpoints = []
+        for rule in app.url_map.iter_rules():
+
+            options = {}
+            for arg in rule.arguments:
+                options[arg] = "[{0}]".format(arg)
+
+            methods = ','.join(rule.methods)
+            url = url_for(rule.endpoint, **options)
+            line = urllib.parse.unquote("{:50s} {:20s} {}".format(rule.endpoint, methods, url))
+            endpoints.append(line)
+
+        for line in sorted(endpoints):
+            print (line)
+
+        return render_template('sitemap.html', endpoints=endpoints, auth=session.get('authenticated'))
 
     # @app.route('/', methods=['POST'])
     # @inject(request=Request, db=SQLAlchemy)
@@ -93,15 +97,20 @@ def configure_views(app, cached):
         return response
 
     @app.route('/user/<username>')
+    @login_required
     @inject(db=SQLAlchemy)
     def getuser(db, username):
-        try:
-            user = db.session.query(User).filter(User.username == username).one()
-        except NoResultFound:
-            response = jsonify(status='No such user', context=username)
-            response.status = '404 Not Found'
-            return response
-        return user.__repr__()
+
+        if session.get('authenticated'):
+            try:
+                user = db.session.query(User).filter(User.username == username).one()
+            except NoResultFound:
+                response = jsonify(status='No such user', context=username)
+                response.status = '404 Not Found'
+                return response
+            print(user.__repr__())
+        return render_template('user.html', user=user, auth=session.get('authenticated'))
+
 
     @app.route('/users')
     @inject(db=SQLAlchemy)
@@ -123,6 +132,20 @@ def configure_views(app, cached):
         response = jsonify(status='OK')
         response.status = '201 CREATED'
         return response
+
+    @app.route('/user/edit/<id>/', methods=['GET', 'POST'])
+    @inject(request=Request, db=SQLAlchemy)
+    def edit_user(id, db, request):
+        if session.get('authenticated'):
+            user = db.session.query(User).filter(User.id == id).one()
+            if user:
+                form = UserForm(obj=user)
+                form.populate_obj(user)
+
+            return render_template('user.html', form = form)
+        else:
+            return render_template('login.html')
+
 
     @app.route('/edit_user/<id>', methods=['POST'])
     @inject(request=Request, db=SQLAlchemy)
@@ -148,17 +171,45 @@ def configure_views(app, cached):
 
     @app.route("/logout")
     def logout():
-        session['logged_in'] = False
+        #session['authenticated'] = False
+        session.pop('authenticated', None)
         return home()
+
+    @app.errorhandler(404)
+    def page_not_found(error):
+        return render_template('page_not_found.html'), 404
+
+
+    # @app.route("/formtest", methods=['GET', 'POST'])
+    # def formtest():
+    #     form = ReusableForm(request.form)
+    #
+    #     print
+    #     form.errors
+    #     if request.method == 'POST':
+    #         name = request.form['name']
+    #         password = request.form['password']
+    #         email = request.form['email']
+    #         print
+    #         name, " ", email, " ", password
+    #
+    #         if form.validate():
+    #             # Save the comment here.
+    #             flash('Thanks for registration ' + name)
+    #         else:
+    #             flash('Error: All the form fields are required. ')
+    #
+    #     return render_template('form_test.html', form=form)
+
 
 
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not session.get('logged_in'):
+        #session.pop('authenticated')
+        if not session.get('authenticated'):
             return render_template('login.html')
-        else:
-            return "<a href='/logout'>Logout</a>"
+        # else:
+        #     return "<a href='/logout'>Logout</a>"
         return f(*args, **kwargs)
-
     return decorated_function

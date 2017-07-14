@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Flask React Tutorial</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.2/react.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.2/JSXTransformer.js"></script>
+   <!-- <link rel="stylesheet" href="/static/style.css" type="text/css"> -->
+</head>
+    <body>
+        <table>
+        <!--{% if auth %}-->
+            <tr>
+                <th>Authorized</th>
+                <th>UserId</th>
+                <th>UserName</th>
+                <th>Email</th>
+            </tr>
+            <tr>
+              <td>Authorized</td>
+                {% if user %}
+                <td>{{user.id}} </td>
+                <td>{{user.username}}</td>
+                <td>{{user.email}}</td>
+                {% else %}
+                <td>No record</td>
+                {% endif %}
+
+                <!--{% if form %}-->
+                <!--<td>{{form.id}} </td>-->
+                <!--<td>{{form.username}}</td>-->
+                <!--<td>{{form.email}}</td>-->
+                <!--{% else %}-->
+                <!--<td>No record</td>-->
+                <!--{% endif %}-->
+
+            <!--{% else %}-->
+              <!--<td>Unauthorized user.  Please log in!</td>-->
+            <!--{% endif %}-->
+            </tr>
+        </table>
+    </body>
+
+</html>

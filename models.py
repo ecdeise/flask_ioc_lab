@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String
 from sqlalchemy import Integer
+from wtforms import Form, TextAreaField, validators
 
 from modules import Base
 
@@ -24,7 +25,6 @@ class User(Base):
     username = Column(String(64), index=True, unique=True)
     email = Column(String(120), index=True, unique=True)
     password = Column(String(64))
-    #posts = relationship('Post', backref='author', lazy='dynamic')
 
     @property
     def is_authenticated(self):
@@ -43,3 +43,13 @@ class User(Base):
 
     def __repr__(self):
         return '{} {} {}'.format(self.get_id(), self.username, self.email)
+
+
+
+from wtforms import Form, TextAreaField, validators
+
+
+class UserForm(Form):
+    username = TextAreaField('Username:', validators=[validators.required()])
+    email = TextAreaField('Email:', validators=[validators.required(), validators.length(min=6, max=35)])
+    password = TextAreaField('Password:', validators=[validators.required(), validators.Length(min=3, max=35)])

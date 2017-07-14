@@ -14,9 +14,10 @@
       <div>Unauthorized user.  Please log in!</div>
     {% endif %}
 
-     <div id="mount-point"></div>
-     <div id="app"></div>
-     <div id="main"></div>
+    {% for endpoint in endpoints %}
+    <p> {{ endpoint }} </p>
+    {% endfor %}
+
 </body>
 
 <script type="text/jsx" src="static/index.jsx"></script>

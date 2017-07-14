@@ -1,6 +1,6 @@
 <link rel="stylesheet" href="/static/style.css" type="text/css">
 {% block body %}
-{% if session['logged_in'] %}
+{% if session['authenticated'] %}
 <p>You're logged in already!</p>
 {% else %}
 
